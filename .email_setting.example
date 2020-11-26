@@ -1,10 +1,10 @@
-dkswxd@126.com
-smtp.126.com
-1395133179@qq.com
-1234567890
+xxxxxxxxxxxxxx@XXX.com
+xxxxxxxxxxxxxx
+smtp.XXX.com
+xxxxxxxxxxxxxx@XXX.com
 
-line0: from addr
-line1: smtp server
-line2: to addr
-line3: password
-
+modify line[0:4] to your email information
+line[0]: email address to send email
+line[1]: email password to send email
+line[2]: email smtp server to send email
+line[3]: email address to receive email
