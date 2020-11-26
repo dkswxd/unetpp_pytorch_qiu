@@ -10,10 +10,8 @@ config_dataset = OrderedDict([
     ('norm_kwargs', {'type':'data'}),
     ('train_dir', '../train/'),
     ('test_dir', '../test/'),
-    ('work_phase', 'train-val-test'),
-    # ('work_phase', 'train-test'),
-    # ('work_phase', 'test'),
     ('batch_size', 1),
+    ('channel_transform', 'none')
 ])
 
 config_model = OrderedDict([
@@ -36,12 +34,15 @@ config_optimizer = OrderedDict([
     ('optimizer', 'Adam'),
     ('learning_rate', 0.001),
     ('weight_decay', 0),
-    ('scheduler', [20, 40]),
+    ('scheduler', [40]),
     ('scheduler_rate', 0.1),
 ])
 
 config_utils = OrderedDict([
     ('workdir', '../workdir/{}_public/'.format(config_name)),
+    ('work_phase', 'train-val-test'),
+    # ('work_phase', 'train-test'),
+    # ('work_phase', 'test'),
 ])
 
 config_public = OrderedDict()
@@ -66,7 +67,7 @@ config_datanorm['workdir'] = '../workdir/{}_norm_data_1/'.format(config_name)
 #
 # config_mixednorm = config_public.copy()
 # config_mixednorm['norm_kwargs'] = {'type':'stat_data_mixed','rate':[0.5,0.5]}
-# config_mixednorm['workdir'] = '../workdir/{}_norm_mixed_2/'
+# config_mixednorm['workdir'] = '../workdir/{}_norm_mixed_2/'.format(config_name)
 
 # config_norm_all = [config_rawnorm, config_statnorm, config_datanorm, config_mixednorm]
 # config_norm_all = [config_rawnorm, config_statnorm, config_datanorm]
@@ -109,19 +110,39 @@ config_nonlocal_all = []
 # for i in range(2):
 #     config_nonlocal_all.append(config_public.copy())
 #     config_nonlocal_all[-1]['use_nonlocal'] = ['down4']
-#     config_nonlocal_all[-1]['scheduler'] = [40]
 #     config_nonlocal_all[-1]['workdir'] = '../workdir/{}_nonlocal_{}/'.format(config_name, i)
 for i in range(2,4):
     config_nonlocal_all.append(config_public.copy())
     config_nonlocal_all[-1]['use_nonlocal'] = ['down4','down3']
-    config_nonlocal_all[-1]['scheduler'] = [40]
     config_nonlocal_all[-1]['workdir'] = '../workdir/{}_nonlocal_{}/'.format(config_name, i)
 for i in range(4,6):
     config_nonlocal_all.append(config_public.copy())
     config_nonlocal_all[-1]['use_nonlocal'] = ['up1_3']
-    config_nonlocal_all[-1]['scheduler'] = [40]
     config_nonlocal_all[-1]['workdir'] = '../workdir/{}_nonlocal_{}/'.format(config_name, i)
 
 ##################################################    features configs
 
-all_configs = config_nonlocal_all
+##################################################    channel_transform configs
+config_channel_transform_all = []
+for i in range(2):
+    config_channel_transform_all.append(config_public.copy())
+    config_channel_transform_all[-1]['channel_transform'] = 'none'
+    config_channel_transform_all[-1]['workdir'] = '../workdir/{}_channel_transform_{}_none/'.format(config_name, i)
+# for i in range(11,16):
+#     config_channel_transform_all.append(config_public.copy())
+#     config_channel_transform_all[-1]['channel_transform'] = 'fft'
+#     config_channel_transform_all[-1]['workdir'] = '../workdir/{}_channel_transform_{}_fft/'.format(config_name, i)
+# for i in range(21,26):
+#     config_channel_transform_all.append(config_public.copy())
+#     config_channel_transform_all[-1]['channel_transform'] = 'fake_rgb_10:40:10'
+#     config_channel_transform_all[-1]['channels'] = 3
+#     config_channel_transform_all[-1]['workdir'] = '../workdir/{}_channel_transform_{}_fake_rgb/'.format(config_name, i)
+# for i in range(31,36):
+#     config_channel_transform_all.append(config_public.copy())
+#     config_channel_transform_all[-1]['channel_transform'] = 'fake_rgb_20'
+#     config_channel_transform_all[-1]['channels'] = 1
+#     config_channel_transform_all[-1]['workdir'] = '../workdir/{}_channel_transform_{}_fake_rgb/'.format(config_name, i)
+
+##################################################    channel_transform configs
+
+all_configs = config_channel_transform_all

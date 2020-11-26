@@ -14,8 +14,8 @@ from tensorboardX import SummaryWriter
 from tqdm import tqdm
 import datetime
 
-# using_config = config_unet
-using_config = config_unetpp
+using_config = config_unet
+# using_config = config_unetpp
 # using_config = config_u2net
 
 for config in using_config.all_configs:
@@ -63,9 +63,9 @@ for config in using_config.all_configs:
     ## build dataset
     if config['dataset'] == 'hyper':
         train_dataset = hyper_dataset(config['train_dir'], config['norm_kwargs'], config['channel_transform'])
-        train_loader = DataLoader(train_dataset, batch_size=config['batch_size'], shuffle=True, num_workers=8)
+        train_loader = DataLoader(train_dataset, batch_size=config['batch_size'], shuffle=True)
         test_dataset = hyper_dataset(config['test_dir'], config['norm_kwargs'], config['channel_transform'])
-        test_loader = DataLoader(test_dataset, batch_size=1, shuffle=False, num_workers=8)
+        test_loader = DataLoader(test_dataset, batch_size=1, shuffle=False)
     else:
         print('dataset not implemented!')
         send_email.send_email(config_str, config['dataset'] + ' dataset not implemented!')

@@ -10,8 +10,6 @@ config_dataset = OrderedDict([
     ('norm_kwargs', {'type':'data'}),
     ('train_dir', '../train/'),
     ('test_dir', '../test/'),
-    # ('work_phase', 'train-test'),
-    # ('work_phase', 'test'),
     ('batch_size', 1),
     ('channel_transform', 'none')
 ])
@@ -43,6 +41,8 @@ config_optimizer = OrderedDict([
 config_utils = OrderedDict([
     ('workdir', '../workdir/{}_public/'.format(config_name)),
     ('work_phase', 'train-val-test'),
+    # ('work_phase', 'train-test'),
+    # ('work_phase', 'test'),
 ])
 
 config_public = OrderedDict()

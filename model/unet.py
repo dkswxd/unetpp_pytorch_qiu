@@ -8,21 +8,25 @@ from torch import Tensor
 from torch.jit.annotations import List
 
 class unet(nn.Module):
-    def __init__(self, layers=4, feature_root=32, channels=60, n_class=2, use_bn=True):
+    def __init__(self, config):
         super(unet, self).__init__()
-        self.layers = layers
-        self.feature_root = feature_root
-        self.channels = channels
-        self.n_class = n_class
-        self.use_bn = use_bn
+        self.layers = config['layers']
+        self.feature_root = config['feature_root']
+        self.channels = config['channels']
+        self.n_class = config['n_class']
+        self.use_bn = config['use_bn']
+        self.track_running_stats = config['track_running_stats']
+        self.bn_momentum = config['bn_momentum']
+        self.use_nonlocal = config['use_nonlocal']
+        self.conv_repeat = config['conv_repeat']
 
         self.down_sample_convs = torch.nn.ModuleDict()
         # down sample conv layers
-        for layer in range(layers):
-            feature_number = feature_root * (2 ** layer)
+        for layer in range(self.layers):
+            feature_number = self.feature_root * (2 ** layer)
             if layer == 0:
                 self.down_sample_convs['down{}'.format(layer)] = nn.Sequential(
-                    self.get_conv_block(channels, feature_number, 'down{}'.format(layer)))
+                    self.get_conv_block(self.channels, feature_number, 'down{}'.format(layer)))
             else:
                 od = OrderedDict([('down{}_pool0'.format(layer), nn.MaxPool2d(kernel_size=2))])
                 od.update(self.get_conv_block(feature_number // 2, feature_number, 'down{}'.format(layer)))
@@ -30,19 +34,19 @@ class unet(nn.Module):
 
         self.up_sample_convs = torch.nn.ModuleDict()
         # up sample conv layers
-        for layer in range(layers - 2, -1, -1):
-            feature_number = feature_root * (2 ** layer)
+        for layer in range(self.layers - 2, -1, -1):
+            feature_number = self.feature_root * (2 ** layer)
             self.up_sample_convs['up{}'.format(layer)] = nn.Sequential(
                 self.get_conv_block(feature_number * 3, feature_number, 'up{}'.format(layer)))
 
         self.up_sample_transpose = torch.nn.ModuleDict()
-        for layer in range(layers - 2, -1, -1):
-            feature_number = feature_root * 2 ** (layer + 1)
+        for layer in range(self.layers - 2, -1, -1):
+            feature_number = self.feature_root * 2 ** (layer + 1)
             # self.up_sample_transpose['up{}_transpose'.format(layer)] = nn.ConvTranspose2d(feature_number, feature_number, kernel_size=2, stride=2, padding=0)
             self.up_sample_transpose['up{}_transpose'.format(layer)] = nn.UpsamplingNearest2d(scale_factor=2)
 
         self.predict_layer = nn.Sequential(OrderedDict([
-                ('predict_conv', nn.Conv2d(feature_root, n_class, kernel_size=3, stride=1, padding=1)),
+                ('predict_conv', nn.Conv2d(self.feature_root, self.n_class, kernel_size=3, stride=1, padding=1)),
                 # ('predict_smax', nn.Sigmoid()),
                 ('predict_smax', nn.Softmax2d()),
                 ]))
@@ -75,14 +79,13 @@ class unet(nn.Module):
 
 
     def get_conv_block(self, in_feature, out_feature, prefix):
-        _return = OrderedDict([
-                    (prefix+'_conv0', nn.Conv2d(in_feature, out_feature, kernel_size=3, stride=1, padding=1)),
-                    (prefix+'_norm0', nn.BatchNorm2d(out_feature, track_running_stats=self.use_bn)),
-                    (prefix+'_relu0', nn.ReLU(inplace=True)),
-                    (prefix+'_conv1', nn.Conv2d(out_feature, out_feature, kernel_size=3, stride=1, padding=1)),
-                    (prefix+'_norm1', nn.BatchNorm2d(out_feature, track_running_stats=self.use_bn)),
-                    (prefix+'_relu1', nn.ReLU(inplace=True)),
-                    ])
+        _return = OrderedDict()
+        for i in range(self.conv_repeat):
+            _return[prefix+'_conv{}'.format(i)] = nn.Conv2d(in_feature, out_feature, kernel_size=3, stride=1, padding=1)
+            in_feature = out_feature
+            if self.use_bn == True:
+                _return[prefix+'_norm{}'.format(i)] = nn.BatchNorm2d(out_feature, momentum=self.bn_momentum, track_running_stats=self.track_running_stats)
+            _return[prefix + '_relu{}'.format(i)] = nn.ReLU(inplace=True)
         return _return
 
 
