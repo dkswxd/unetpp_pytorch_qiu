@@ -9,6 +9,7 @@ config_dataset = OrderedDict([
     ('n_class', 2),
     ('norm_kwargs', {'type':'data'}),
     ('train_dir', '../train/'),
+    ('val_dir', '../val/'),
     ('test_dir', '../test/'),
     ('batch_size', 1),
     ('channel_transform', 'none')
@@ -33,7 +34,7 @@ config_optimizer = OrderedDict([
     ('loss', 'BCE'),
     ('optimizer', 'Adam'),
     ('learning_rate', 0.001),
-    ('weight_decay', 0),
+    ('weight_decay', 0.001),
     ('scheduler', [40]),
     ('scheduler_rate', 0.1),
 ])
@@ -127,7 +128,8 @@ config_channel_transform_all = []
 for i in range(2):
     config_channel_transform_all.append(config_public.copy())
     config_channel_transform_all[-1]['channel_transform'] = 'none'
-    config_channel_transform_all[-1]['workdir'] = '../workdir/{}_channel_transform_{}_none/'.format(config_name, i)
+    config_channel_transform_all[-1]['workdir'] = '../workdir_old0/{}_channel_transform_{}_none/'.format(config_name, i)
+    # config_channel_transform_all[-1]['workdir'] = '../workdir/{}_channel_transform_{}_none/'.format(config_name, i)
 # for i in range(11,16):
 #     config_channel_transform_all.append(config_public.copy())
 #     config_channel_transform_all[-1]['channel_transform'] = 'fft'
@@ -145,4 +147,12 @@ for i in range(2):
 
 ##################################################    channel_transform configs
 
-all_configs = config_channel_transform_all
+##################################################    weight decay configs
+config_weight_decay_all = []
+for i in range(1, 9):
+    config_weight_decay_all.append(config_public.copy())
+    config_weight_decay_all[-1]['weight_decay'] = 10 ** (-i)
+    config_weight_decay_all[-1]['workdir'] = '../workdir/{}_weight_decay_{}/'.format(config_name, i)
+
+##################################################    weight decay configs
+all_configs = config_weight_decay_all

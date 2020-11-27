@@ -1,7 +1,7 @@
 import matplotlib.pyplot as plt
 import numpy as np
 
-target_file = '/media/qiu/65F33762C14D581B/zzh/unetpp_pytorch/workdir/unetpp_channel_transform_1_none/2020-11-25 13:16:07.075861.txt'
+target_file = '/media/qiu/65F33762C14D581B/zzh/unetpp_pytorch/workdir_old0/unetpp_channel_transform_1_none/2020-11-25 13:16:07.075861.txt'
 epoch = []
 accuracy = []
 kappa = []
