@@ -97,63 +97,64 @@ for config in using_config.all_configs:
             scheduler.step(epoch)
             if epoch % config['save_interval'] == config['save_interval'] - 1:
                 torch.save(model.state_dict(), os.path.join(config['workdir'] ,"epoch_{}.pth".format(epoch)))
-            del loss, prediction
             torch.cuda.empty_cache()
 
         # val
         if 'val' in config['work_phase']:
-            model.eval()
-            metrics_ = []
-            for step, (batch_x, batch_y) in enumerate(tqdm(val_loader)):
-                batch_x = batch_x.cuda()
-                batch_y = batch_y.cuda()
-                prediction = model(batch_x)
-                loss = torch.tensor(0, dtype=torch.float32).cuda()
-                for pred in prediction:
-                    loss += loss_func(pred, batch_y)
-                # print('epoch:{}, step:{}, train loss:{}'.format(epoch, step, loss))
-                log.write('---time:{}, epoch:{}, step:{}, test loss:{}\n'.format(datetime.datetime.now(), epoch, step, loss))
-                writer.add_scalar('testloss', loss.item(), global_step=step + epoch * test_dataset.len)
-                optimizer.zero_grad()
-                ### metric
-                prediction = prediction[-1].detach().cpu().numpy()
-                batch_y = batch_y.detach().cpu().numpy()
-                metrics_.append(metric.get_metrics(prediction, batch_y))
-            result_str = '\n***epoch_{}_result***\n'.format(epoch)
-            for k,v in metric.show_metrics(metrics_).items():
-                result_str += '{}: {}\n'.format(k, v)
-            print(result_str)
-            log.write(result_str)
-            if metric.show_metrics(metrics_)['kappa'] > best_val_score:
-                torch.save(model.state_dict(), os.path.join(config['workdir'], "best_val_score.pth".format(epoch)))
-            torch.cuda.empty_cache()
+            with torch.no_grad():
+                model.eval()
+                metrics_ = []
+                for step, (batch_x, batch_y) in enumerate(tqdm(val_loader)):
+                    batch_x = batch_x.cuda()
+                    batch_y = batch_y.cuda()
+                    prediction = model(batch_x)
+                    loss = torch.tensor(0, dtype=torch.float32).cuda()
+                    for pred in prediction:
+                        loss += loss_func(pred, batch_y)
+                    # print('epoch:{}, step:{}, train loss:{}'.format(epoch, step, loss))
+                    log.write('---time:{}, epoch:{}, step:{}, test loss:{}\n'.format(datetime.datetime.now(), epoch, step, loss))
+                    writer.add_scalar('testloss', loss.item(), global_step=step + epoch * test_dataset.len)
+                    optimizer.zero_grad()
+                    ### metric
+                    prediction = prediction[-1].detach().cpu().numpy()
+                    batch_y = batch_y.detach().cpu().numpy()
+                    metrics_.append(metric.get_metrics(prediction, batch_y))
+                result_str = '\n***epoch_{}_result***\n'.format(epoch)
+                for k,v in metric.show_metrics(metrics_).items():
+                    result_str += '{}: {}\n'.format(k, v)
+                print(result_str)
+                log.write(result_str)
+                if metric.show_metrics(metrics_)['kappa'] > best_val_score:
+                    torch.save(model.state_dict(), os.path.join(config['workdir'], "best_val_score.pth".format(epoch)))
+                torch.cuda.empty_cache()
 
 
     # test
 
     if 'test' in config['work_phase']:
-        for epoch in range(config['save_interval'] - 1, config['epoch'] + config['save_interval'], config['save_interval']):
-            if epoch <= config['epoch']:
-                test_epoch = "epoch_{}.pth".format(epoch)
-            else:
-                test_epoch = "best_val_score.pth"
-            model.load_state_dict(torch.load(os.path.join(config['workdir'] ,test_epoch)))
-            model.eval()
-            # model.train()
-            metrics_ = []
-            for step, (batch_x, batch_y) in enumerate(tqdm(test_loader)):
-                batch_x = batch_x.cuda()
-                # batch_y = batch_y.cuda()
-                prediction = model(batch_x)
-                ### metric
-                prediction = prediction[-1].detach().cpu().numpy()
-                batch_y = batch_y.detach().cpu().numpy()
-                metrics_.append(metric.get_metrics(prediction, batch_y))
-            result_str = '\n***test_{}_result***\n'.format(test_epoch)
-            for k, v in metric.show_metrics(metrics_).items():
-                result_str += '{}: {}\n'.format(k, v)
-            print(result_str)
-            log.write(result_str)
-            config_str += result_str
-            torch.cuda.empty_cache()
+        with torch.no_grad():
+            for epoch in range(config['save_interval'] - 1, config['epoch'] + config['save_interval'], config['save_interval']):
+                if epoch <= config['epoch']:
+                    test_epoch = "epoch_{}.pth".format(epoch)
+                else:
+                    test_epoch = "best_val_score.pth"
+                model.load_state_dict(torch.load(os.path.join(config['workdir'] ,test_epoch)))
+                model.eval()
+                # model.train()
+                metrics_ = []
+                for step, (batch_x, batch_y) in enumerate(tqdm(test_loader)):
+                    batch_x = batch_x.cuda()
+                    # batch_y = batch_y.cuda()
+                    prediction = model(batch_x)
+                    ### metric
+                    prediction = prediction[-1].detach().cpu().numpy()
+                    batch_y = batch_y.detach().cpu().numpy()
+                    metrics_.append(metric.get_metrics(prediction, batch_y))
+                result_str = '\n***test_{}_result***\n'.format(test_epoch)
+                for k, v in metric.show_metrics(metrics_).items():
+                    result_str += '{}: {}\n'.format(k, v)
+                print(result_str)
+                log.write(result_str)
+                config_str += result_str
+                torch.cuda.empty_cache()
     send_email.send_email(config_str, config['workdir'] + ' finished!')
