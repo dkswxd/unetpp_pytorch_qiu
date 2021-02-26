@@ -16,13 +16,13 @@ requirement:
 conda create -n unetpp python=3.7
 conda activate unetpp
 conda install pytorch==1.4.0 torchvision==0.5.0 cudatoolkit=10.1 -c pytorch -y
-conda install tqdm scipy scikit-learn -y
+conda install tqdm scipy scikit-learn scikit-image -y
 conda install tensorboardx -c conda-forge -y
 conda install opencv==4.5.0 -c conda-forge -y
 ```
 download this repository
 ```shell script
-git clone xxxxxx
+git clone https://github.com/dkswxd/unetpp_pytorch_qiu
 cd unetpp_pytorch 
 ```
 use email notification
@@ -34,6 +34,8 @@ compile
 ```shell script
 cd ./model/ext/deform/
 python setup.py install
+cd ../SoftPool/pytorch/
+make install
 ```
 prepare dataset
 ```shell script
