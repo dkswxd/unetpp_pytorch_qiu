@@ -7,11 +7,12 @@ from collections import OrderedDict
 from torch import Tensor
 from torch.jit.annotations import List
 import numpy as np
-from pytorch_loss import FocalLossV1, FocalLossV2, FocalLossV3
+from .CLSTM import ConvLSTM
+from .ext.deform import deform_conv, modulated_deform_conv
 
-class unet(nn.Module):
+class BiCLSTM_dunet(nn.Module):
     def __init__(self, config):
-        super(unet, self).__init__()
+        super(BiCLSTM_dunet, self).__init__()
         self.layers = config['layers']
         self.feature_root = config['feature_root']
         self.channels = config['channels']
@@ -23,12 +24,19 @@ class unet(nn.Module):
         self.num_groups = config['num_groups']
         self.conv_repeat = config['conv_repeat']
 
+        self.use_deform = config['use_deform']
+        self.modulated = config['modulated']
+
+        self.BiCLSTM_feature_root = config['BiCLSTM_feature_root']
         if config['loss'] == 'BCE':
             self.loss_func = torch.nn.BCELoss()
-        elif config['loss'] == 'focal':
-            self.loss_func = FocalLossV2(alpha=0.5)
         else:
             pass
+
+
+        self.forwardLSTM = ConvLSTM(1, self.BiCLSTM_feature_root, 3, stride=1, padding=1)
+        self.backwardLSTM = ConvLSTM(1, self.BiCLSTM_feature_root, 3, stride=1, padding=1)
+
 
         self.down_sample_convs = torch.nn.ModuleDict()
         # down sample conv layers
@@ -36,7 +44,7 @@ class unet(nn.Module):
             feature_number = self.feature_root * (2 ** layer)
             if layer == 0:
                 self.down_sample_convs['down{}'.format(layer)] = nn.Sequential(
-                    self.get_conv_block(self.channels, feature_number, 'down{}'.format(layer)))
+                    self.get_conv_block(self.BiCLSTM_feature_root * 2, feature_number, 'down{}'.format(layer)))
             else:
                 od = OrderedDict([('down{}_pool0'.format(layer), nn.MaxPool2d(kernel_size=2))])
                 od.update(self.get_conv_block(feature_number // 2, feature_number, 'down{}'.format(layer)))
@@ -71,10 +79,23 @@ class unet(nn.Module):
                 nn.init.constant_(m.bias, 0)
 
     def forward(self, x):
+        x = F.max_pool2d(x, 2, 2)
+        B, C, H, W = x.shape
+        # x (B, C, H, W)
+        x = torch.transpose(x, 0, 1)
+        # x (C, B, H, W)
+        x = torch.unsqueeze(x, 2)
+        # x (C, B, 1, H, W)
+        _, forward_h, _ = self.forwardLSTM(x, None, C)
+        # forward_h (B, feature_root, H, W)
+        _, backward_h, _ = self.backwardLSTM(x.flip((0)), None, C)
+        # backward_h (B, feature_root, H, W)
+        _cat = torch.cat([forward_h, backward_h], 1)
+
         down_features = []
         for layer in range(self.layers):
             if layer == 0:
-                down_features.append(self.down_sample_convs['down{}'.format(layer)](x))
+                down_features.append(self.down_sample_convs['down{}'.format(layer)](_cat))
             else:
                 down_features.append(self.down_sample_convs['down{}'.format(layer)](down_features[-1]))
         up_features = []
@@ -85,18 +106,23 @@ class unet(nn.Module):
                 _cat = torch.cat((down_features[layer], self.up_sample_transpose['up{}_transpose'.format(layer)](up_features[-1])), 1)
             up_features.append(self.up_sample_convs['up{}'.format(layer)](_cat))
         logits = self.predict_layer(up_features[-1])
+        logits = F.interpolate(logits,scale_factor=2,mode='nearest')
         return logits
 
 
     def get_conv_block(self, in_feature, out_feature, prefix):
         _return = OrderedDict()
         for i in range(self.conv_repeat):
-            _return[prefix+'_conv{}'.format(i)] = nn.Conv2d(in_feature, out_feature, kernel_size=3, stride=1, padding=1)
+            if prefix+'_conv{}'.format(i) in self.use_deform:
+                if self.modulated:
+                    _return[prefix + '_conv{}'.format(i)] = modulated_deform_conv.ModulatedDeformConv2dPack(in_feature, out_feature, kernel_size=3, stride=1, padding=1)
+                else:
+                    _return[prefix + '_conv{}'.format(i)] = deform_conv.DeformConv2dPack(in_feature, out_feature, kernel_size=3, stride=1, padding=1)
+            else:
+                _return[prefix+'_conv{}'.format(i)] = nn.Conv2d(in_feature, out_feature, kernel_size=3, stride=1, padding=1)
             in_feature = out_feature
             if self.use_bn == True:
                 _return[prefix+'_norm{}'.format(i)] = nn.BatchNorm2d(out_feature, momentum=self.bn_momentum, track_running_stats=self.track_running_stats)
-            elif self.use_gn == True:
-                _return[prefix+'_norm{}'.format(i)] = nn.GroupNorm(num_groups=self.num_groups, num_channels=out_feature)
             _return[prefix + '_relu{}'.format(i)] = nn.ReLU(inplace=True)
         return _return
 

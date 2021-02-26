@@ -1,17 +1,12 @@
-import re
 import torch
 import torch.nn as nn
-import torch.nn.functional as F
-import torch.utils.checkpoint as cp
 from collections import OrderedDict
-from torch import Tensor
-from torch.jit.annotations import List
+from .ext.deform import deform_conv, modulated_deform_conv
 import numpy as np
-from pytorch_loss import FocalLossV1, FocalLossV2, FocalLossV3
 
-class unet(nn.Module):
+class unet_deform(nn.Module):
     def __init__(self, config):
-        super(unet, self).__init__()
+        super(unet_deform, self).__init__()
         self.layers = config['layers']
         self.feature_root = config['feature_root']
         self.channels = config['channels']
@@ -19,14 +14,13 @@ class unet(nn.Module):
         self.use_bn = config['use_bn']
         self.track_running_stats = config['track_running_stats']
         self.bn_momentum = config['bn_momentum']
-        self.use_gn = config['use_gn']
-        self.num_groups = config['num_groups']
         self.conv_repeat = config['conv_repeat']
+
+        self.use_deform = config['use_deform']
+        self.modulated = config['modulated']
 
         if config['loss'] == 'BCE':
             self.loss_func = torch.nn.BCELoss()
-        elif config['loss'] == 'focal':
-            self.loss_func = FocalLossV2(alpha=0.5)
         else:
             pass
 
@@ -91,16 +85,18 @@ class unet(nn.Module):
     def get_conv_block(self, in_feature, out_feature, prefix):
         _return = OrderedDict()
         for i in range(self.conv_repeat):
-            _return[prefix+'_conv{}'.format(i)] = nn.Conv2d(in_feature, out_feature, kernel_size=3, stride=1, padding=1)
+            if prefix+'_conv{}'.format(i) in self.use_deform:
+                if self.modulated:
+                    _return[prefix + '_conv{}'.format(i)] = modulated_deform_conv.ModulatedDeformConv2dPack(in_feature, out_feature, kernel_size=3, stride=1, padding=1)
+                else:
+                    _return[prefix + '_conv{}'.format(i)] = deform_conv.DeformConv2dPack(in_feature, out_feature, kernel_size=3, stride=1, padding=1)
+            else:
+                _return[prefix+'_conv{}'.format(i)] = nn.Conv2d(in_feature, out_feature, kernel_size=3, stride=1, padding=1)
             in_feature = out_feature
             if self.use_bn == True:
                 _return[prefix+'_norm{}'.format(i)] = nn.BatchNorm2d(out_feature, momentum=self.bn_momentum, track_running_stats=self.track_running_stats)
-            elif self.use_gn == True:
-                _return[prefix+'_norm{}'.format(i)] = nn.GroupNorm(num_groups=self.num_groups, num_channels=out_feature)
             _return[prefix + '_relu{}'.format(i)] = nn.ReLU(inplace=True)
         return _return
-
-
 
 
     def get_loss(self, logits, batch_y):

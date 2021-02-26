@@ -1,7 +1,7 @@
 
 from collections import OrderedDict
 
-config_name = 'unetpp'
+config_name = 'pspnet'
 
 config_dataset = OrderedDict([
     ('dataset', 'hyper'),
@@ -20,15 +20,11 @@ config_dataset = OrderedDict([
 
 config_model = OrderedDict([
     ('model', config_name),
-    ('layers', 4),
-    ('feature_root', 32),
-    ('conv_repeat', 2),
-    ('use_bn', True),
-    ('track_running_stats', False),
-    # ('track_running_stats', True),
-    ('bn_momentum', 0.1),
-    ('use_gn', False),
-    ('num_groups', 16),
+    # ('use_bn', True),
+    # ('track_running_stats', False),
+    # ('bn_momentum', 0.1),
+    ('n_blocks',[3, 4, 6, 3]),
+    ('pyramids',[6, 3, 2, 1]),
     ('epoch', 50),
     ('save_interval', 5),
     ('restore', False),  # TODO: restore training not implemented!
@@ -46,8 +42,6 @@ config_optimizer = OrderedDict([
 config_utils = OrderedDict([
     ('workdir', '../cancer/workdir/{}_public/'.format(config_name)),
     ('work_phase', 'train-val-test'),
-    # ('work_phase', 'train-test'),
-    # ('work_phase', 'test'),
 ])
 
 config_public = OrderedDict()
@@ -55,6 +49,7 @@ config_public.update(config_dataset)
 config_public.update(config_model)
 config_public.update(config_optimizer)
 config_public.update(config_utils)
+
 
 ##################################################    split configs
 config_split_all = []

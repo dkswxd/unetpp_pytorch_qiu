@@ -8,9 +8,9 @@ from torch import Tensor
 from torch.jit.annotations import List
 import numpy as np
 
-class unetpp(nn.Module):
+class unet_poi(nn.Module):
     def __init__(self, config):
-        super(unetpp, self).__init__()
+        super(unet_poi, self).__init__()
         self.layers = config['layers']
         self.feature_root = config['feature_root']
         self.channels = config['channels']
@@ -27,6 +27,8 @@ class unetpp(nn.Module):
         else:
             pass
 
+        self.loss_func_poi = torch.nn.MSELoss()
+
         self.down_sample_convs = torch.nn.ModuleDict()
         # down sample conv layers
         for layer in range(self.layers):
@@ -39,31 +41,28 @@ class unetpp(nn.Module):
                 od.update(self.get_conv_block(feature_number // 2, feature_number, 'down{}'.format(layer)))
                 self.down_sample_convs['down{}'.format(layer)] = nn.Sequential(od)
 
-
         self.up_sample_convs = torch.nn.ModuleDict()
         # up sample conv layers
-        for layer_i in range(1, self.layers):
-            for layer_j in range(self.layers - layer_i):
-                feature_number = self.feature_root * (2 ** layer_j)
-                self.up_sample_convs['up{}_{}'.format(layer_i, layer_j)] = nn.Sequential(
-                    self.get_conv_block(feature_number * (2 + layer_i), feature_number, 'up{}_{}'.format(layer_i, layer_j)))
+        for layer in range(self.layers - 2, -1, -1):
+            feature_number = self.feature_root * (2 ** layer)
+            self.up_sample_convs['up{}'.format(layer)] = nn.Sequential(
+                self.get_conv_block(feature_number * 3, feature_number, 'up{}'.format(layer)))
 
-
-        # up sample layers
         self.up_sample_transpose = torch.nn.ModuleDict()
-        for layer_i in range(1, self.layers):
-            for layer_j in range(self.layers - layer_i):
-                feature_number = self.feature_root * 2 ** (layer_j + 1)
-                # self.up_sample_transpose['up{}_transpose'.format(layer)] = nn.ConvTranspose2d(feature_number, feature_number, kernel_size=2, stride=2, padding=0)
-                self.up_sample_transpose['up{}_{}_transpose'.format(layer_i, layer_j)] = nn.UpsamplingNearest2d(scale_factor=2)
+        for layer in range(self.layers - 2, -1, -1):
+            feature_number = self.feature_root * 2 ** (layer + 1)
+            # self.up_sample_transpose['up{}_transpose'.format(layer)] = nn.ConvTranspose2d(feature_number, feature_number, kernel_size=2, stride=2, padding=0)
+            self.up_sample_transpose['up{}_transpose'.format(layer)] = nn.UpsamplingNearest2d(scale_factor=2)
 
-        # up predict layer
-        self.predict_layer = torch.nn.ModuleDict()
-        for layer_i in range(1, self.layers):
-            self.predict_layer['predict{}'.format(layer_i)] = nn.Sequential(OrderedDict([
-                ('predict{}_conv'.format(layer_i), nn.Conv2d(self.feature_root, self.n_class, kernel_size=3, stride=1, padding=1)),
-                # ('predict_smax', nn.Sigmoid()),
-                ('predict{}_smax'.format(layer_i), nn.Softmax2d()),
+        self.predict_layer = nn.Sequential(OrderedDict([
+                ('predict_conv', nn.Conv2d(self.feature_root, self.n_class, kernel_size=3, stride=1, padding=1)),
+                ('predict_smax', nn.Softmax2d()),
+                ]))
+
+        self.predict_layer_poi = nn.Sequential(OrderedDict([
+                ('predict_poi_linear1', nn.Linear(self.feature_root * (2 ** (self.layers - 1)), 100, bias=False)),
+                ('predict_poi_linear2', nn.Linear(100, 1, bias=False)),
+                ('predict_poi_sigmoid', nn.Sigmoid()),
                 ]))
 
         for m in self.modules():
@@ -72,29 +71,25 @@ class unetpp(nn.Module):
             elif isinstance(m, nn.BatchNorm2d):
                 nn.init.constant_(m.weight, 1)
                 nn.init.constant_(m.bias, 0)
-            elif isinstance(m, nn.Linear):
-                nn.init.constant_(m.bias, 0)
-
 
     def forward(self, x):
         down_features = []
         for layer in range(self.layers):
             if layer == 0:
-                down_features.append([self.down_sample_convs['down{}'.format(layer)](x)])
+                down_features.append(self.down_sample_convs['down{}'.format(layer)](x))
             else:
-                down_features.append([self.down_sample_convs['down{}'.format(layer)](down_features[-1][0])])
-        # up_features = []
-        for layer_i in range(1, self.layers):
-            for layer_j in range(self.layers - layer_i):
-                _cat = [self.up_sample_transpose['up{}_{}_transpose'.format(layer_i, layer_j)](down_features[layer_j + 1][layer_i - 1])]
-                for i in range(layer_i):
-                    _cat.append(down_features[layer_j][i])
-                _cat = torch.cat(_cat, 1)
-                down_features[layer_j].append(self.up_sample_convs['up{}_{}'.format(layer_i, layer_j)](_cat))
-        logits = []
-        for layer_i in range(1, self.layers):
-            logits.append(self.predict_layer['predict{}'.format(layer_i)](down_features[0][layer_i]))
-        return logits
+                down_features.append(self.down_sample_convs['down{}'.format(layer)](down_features[-1]))
+        up_features = []
+        for layer in range(self.layers - 2, -1, -1):
+            if layer == self.layers - 2:
+                _cat = torch.cat((down_features[layer], self.up_sample_transpose['up{}_transpose'.format(layer)](down_features[layer + 1])), 1)
+            else:
+                _cat = torch.cat((down_features[layer], self.up_sample_transpose['up{}_transpose'.format(layer)](up_features[-1])), 1)
+            up_features.append(self.up_sample_convs['up{}'.format(layer)](_cat))
+        logits = self.predict_layer(up_features[-1])
+        poi = F.adaptive_avg_pool2d(down_features[-1], (1,1)).view(-1)
+        poi = self.predict_layer_poi(poi)
+        return [poi, logits]
 
 
     def get_conv_block(self, in_feature, out_feature, prefix):
@@ -110,18 +105,23 @@ class unetpp(nn.Module):
         return _return
 
 
+
+
     def get_loss(self, logits, batch_y):
-        loss = torch.tensor(0, dtype=torch.float32).cuda()
-        for i in range(len(logits)):
-            w = 1 if i == len(logits) - 1 else 0.4
-            loss += w * self.loss_func(logits[i], batch_y)
+        loss = self.loss_func(logits[-1], batch_y)
+        loss += self.loss_func_poi(logits[0], batch_y[:,0,...].mean((1, 2))) * 0.4
         return loss
 
     def get_predict(self, logits, thresh=True):
+        poi = logits[0].detach().cpu().numpy()
         logits = logits[-1].detach().cpu().numpy()
         pred = logits[0, 1, :, :]
+
+        predict_list = pred.reshape(-1).copy()
+        predict_list.sort()
+        thre = predict_list[int(poi * len(predict_list))]
         if thresh:
-            pred = np.where(pred > 0.5, 1, 0)
+            pred = np.where(pred > thre, 1, 0)
         return pred
 
     def get_gt(self, batch_y):

@@ -77,7 +77,7 @@ for config in config_factory.all_configs:
                     optimizer.zero_grad()
                     loss.backward()
                     optimizer.step()
-            scheduler.step()
+            scheduler.step(epoch)
             if epoch % config['save_interval'] == config['save_interval'] - 1:
                 torch.save(model.state_dict(), os.path.join(config['workdir'] ,"epoch_{}.pth".format(epoch)))
             torch.cuda.empty_cache()

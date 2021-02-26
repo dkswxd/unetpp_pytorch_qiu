@@ -6,6 +6,7 @@ import torch.utils.checkpoint as cp
 from collections import OrderedDict
 from torch import Tensor
 from torch.jit.annotations import List
+import numpy as np
 
 class u2net(nn.Module):
     def __init__(self, config):
@@ -21,6 +22,10 @@ class u2net(nn.Module):
         # self.conv_repeat = config['conv_repeat']
         self.u2net_type = config['u2net_type']
 
+        if config['loss'] == 'BCE':
+            self.loss_func = torch.nn.BCELoss()
+        else:
+            pass
 
         fr = self.feature_root
         ch = self.channels
@@ -120,15 +125,34 @@ class u2net(nn.Module):
                 _cat = torch.cat((down_features[layer], F.interpolate(up_features[-1], scale_factor=2)), 1)
             up_features.append(self.up_sample_convs['de_{}'.format(layer)](_cat))
 
-        predict = []
+        logits = []
         for layer in range(self.layers):
             if layer == self.layers - 1:
-                predict.append(self.predict_layer['sup_{}'.format(layer)](down_features[layer]))
+                logits.append(self.predict_layer['sup_{}'.format(layer)](down_features[layer]))
             else:
-                predict.append(self.predict_layer['sup_{}'.format(layer)](up_features[- layer - 1]))
-        predict.append(self.predict_layer['sup_fusion'](torch.cat(predict, 1)))
-        return predict
+                logits.append(self.predict_layer['sup_{}'.format(layer)](up_features[- layer - 1]))
+        logits.append(self.predict_layer['sup_fusion'](torch.cat(logits, 1)))
+        return logits
 
+
+    def get_loss(self, logits, batch_y):
+        loss = torch.tensor(0, dtype=torch.float32).cuda()
+        for i in range(len(logits)):
+            w = 1 if i == len(logits) - 1 else 0.4
+            loss += w * self.loss_func(logits[i], batch_y)
+        return loss
+
+    def get_predict(self, logits, thresh=True):
+        logits = logits[-1].detach().cpu().numpy()
+        pred = logits[0, 1, :, :]
+        if thresh:
+            pred = np.where(pred > 0.5, 1, 0)
+        return pred
+
+    def get_gt(self, batch_y):
+        batch_y = batch_y.detach().cpu().numpy()
+        batch_y = batch_y[0, 1, :, :]
+        return np.where(batch_y > 0.5, 1, 0)
 #############################################################################    RSU
 
 class RSU(nn.Module):

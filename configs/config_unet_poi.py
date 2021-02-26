@@ -1,7 +1,7 @@
 
 from collections import OrderedDict
 
-config_name = 'unetpp'
+config_name = 'unet_poi'
 
 config_dataset = OrderedDict([
     ('dataset', 'hyper'),

@@ -1,7 +1,7 @@
 
 from collections import OrderedDict
 
-config_name = 'unetpp'
+config_name = 'unet_deform'
 
 config_dataset = OrderedDict([
     ('dataset', 'hyper'),
@@ -32,6 +32,8 @@ config_model = OrderedDict([
     ('epoch', 50),
     ('save_interval', 5),
     ('restore', False),  # TODO: restore training not implemented!
+    ('modulated',False),
+    ('use_deform', ['down3_conv0', 'down3_conv1', 'down2_conv0', 'down2_conv1', 'up2_conv0', 'up2_conv1']),
 ])
 
 config_optimizer = OrderedDict([
@@ -56,6 +58,7 @@ config_public.update(config_model)
 config_public.update(config_optimizer)
 config_public.update(config_utils)
 
+
 ##################################################    split configs
 config_split_all = []
 for i in range(5):
@@ -63,8 +66,23 @@ for i in range(5):
     config_split_all[-1]['train_split'] = '../cancer/split/split_{}_train.txt'.format(i)
     config_split_all[-1]['val_split'] = '../cancer/split/split_{}_val.txt'.format(i)
     config_split_all[-1]['test_split'] = '../cancer/split/split_{}_test.txt'.format(i)
-    config_split_all[-1]['workdir'] = '../cancer/workdir/{}_split_{}/'.format(config_name, i)
+    # config_split_all[-1]['workdir'] = '../cancer/workdir/{}_split__{}/'.format(config_name, i)
+    config_split_all[-1]['workdir'] = '../cancer/workdir/{}_wd_split_{}/'.format(config_name, i)
+    # config_split_all[-1]['work_phase'] = 'test'
 ##################################################    split configs
 
+##################################################    split configs
+config_modulated_all = []
+for i in range(5):
+    config_modulated_all.append(config_public.copy())
+    config_modulated_all[-1]['modulated'] = True
+    config_modulated_all[-1]['train_split'] = '../cancer/split/split_{}_train.txt'.format(i)
+    config_modulated_all[-1]['val_split'] = '../cancer/split/split_{}_val.txt'.format(i)
+    config_modulated_all[-1]['test_split'] = '../cancer/split/split_{}_test.txt'.format(i)
+    # config_modulated_all[-1]['workdir'] = '../cancer/workdir/{}_split__{}/'.format(config_name, i)
+    config_modulated_all[-1]['workdir'] = '../cancer/workdir/{}_modulated_deform6_{}/'.format(config_name, i)
+    # config_modulated_all[-1]['work_phase'] = 'test'
+##################################################    split configs
 all_configs = config_split_all
 # all_configs = []
+# all_configs = [config_public]

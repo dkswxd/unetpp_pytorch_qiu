@@ -26,3 +26,7 @@ def send_email(content, header):
         server.quit()
     except:
         print('send email failed!')
+
+
+if __name__ == '__main__':
+    send_email('1', '2')

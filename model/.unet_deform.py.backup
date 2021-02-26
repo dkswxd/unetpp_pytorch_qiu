@@ -6,12 +6,11 @@ import torch.utils.checkpoint as cp
 from collections import OrderedDict
 from torch import Tensor
 from torch.jit.annotations import List
-import numpy as np
-from pytorch_loss import FocalLossV1, FocalLossV2, FocalLossV3
+from .deform_conv_v2 import DeformConv2d
 
-class unet(nn.Module):
+class unet_deform(nn.Module):
     def __init__(self, config):
-        super(unet, self).__init__()
+        super(unet_deform, self).__init__()
         self.layers = config['layers']
         self.feature_root = config['feature_root']
         self.channels = config['channels']
@@ -23,12 +22,7 @@ class unet(nn.Module):
         self.num_groups = config['num_groups']
         self.conv_repeat = config['conv_repeat']
 
-        if config['loss'] == 'BCE':
-            self.loss_func = torch.nn.BCELoss()
-        elif config['loss'] == 'focal':
-            self.loss_func = FocalLossV2(alpha=0.5)
-        else:
-            pass
+        self.use_deform = config['use_deform']
 
         self.down_sample_convs = torch.nn.ModuleDict()
         # down sample conv layers
@@ -84,14 +78,17 @@ class unet(nn.Module):
             else:
                 _cat = torch.cat((down_features[layer], self.up_sample_transpose['up{}_transpose'.format(layer)](up_features[-1])), 1)
             up_features.append(self.up_sample_convs['up{}'.format(layer)](_cat))
-        logits = self.predict_layer(up_features[-1])
-        return logits
+        predict = self.predict_layer(up_features[-1])
+        return [predict]
 
 
     def get_conv_block(self, in_feature, out_feature, prefix):
         _return = OrderedDict()
         for i in range(self.conv_repeat):
-            _return[prefix+'_conv{}'.format(i)] = nn.Conv2d(in_feature, out_feature, kernel_size=3, stride=1, padding=1)
+            if prefix+'_conv{}'.format(i) in self.use_deform:
+                _return[prefix+'_conv{}'.format(i)] = DeformConv2d(in_feature, out_feature, kernel_size=3, stride=1, padding=1)
+            else:
+                _return[prefix+'_conv{}'.format(i)] = nn.Conv2d(in_feature, out_feature, kernel_size=3, stride=1, padding=1)
             in_feature = out_feature
             if self.use_bn == True:
                 _return[prefix+'_norm{}'.format(i)] = nn.BatchNorm2d(out_feature, momentum=self.bn_momentum, track_running_stats=self.track_running_stats)
@@ -102,18 +99,3 @@ class unet(nn.Module):
 
 
 
-
-    def get_loss(self, logits, batch_y):
-        return self.loss_func(logits, batch_y)
-
-    def get_predict(self, logits, thresh=True):
-        logits = logits.detach().cpu().numpy()
-        pred = logits[0, 1, :, :]
-        if thresh:
-            pred = np.where(pred > 0.5, 1, 0)
-        return pred
-
-    def get_gt(self, batch_y):
-        batch_y = batch_y.detach().cpu().numpy()
-        batch_y = batch_y[0, 1, :, :]
-        return np.where(batch_y > 0.5, 1, 0)

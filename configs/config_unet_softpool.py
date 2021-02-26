@@ -1,7 +1,7 @@
 
 from collections import OrderedDict
 
-config_name = 'unetpp'
+config_name = 'unet_softpool'
 
 config_dataset = OrderedDict([
     ('dataset', 'hyper'),
@@ -56,8 +56,8 @@ config_public.update(config_model)
 config_public.update(config_optimizer)
 config_public.update(config_utils)
 
-##################################################    split configs
 config_split_all = []
+##################################################    split configs
 for i in range(5):
     config_split_all.append(config_public.copy())
     config_split_all[-1]['train_split'] = '../cancer/split/split_{}_train.txt'.format(i)

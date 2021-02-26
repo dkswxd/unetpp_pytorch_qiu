@@ -1,7 +1,7 @@
 
 from collections import OrderedDict
 
-config_name = 'unetpp'
+config_name = 'unet_DS'
 
 config_dataset = OrderedDict([
     ('dataset', 'hyper'),
@@ -20,6 +20,7 @@ config_dataset = OrderedDict([
 
 config_model = OrderedDict([
     ('model', config_name),
+    ('aux_weight', 0.1),
     ('layers', 4),
     ('feature_root', 32),
     ('conv_repeat', 2),
@@ -56,8 +57,8 @@ config_public.update(config_model)
 config_public.update(config_optimizer)
 config_public.update(config_utils)
 
-##################################################    split configs
 config_split_all = []
+##################################################    split configs
 for i in range(5):
     config_split_all.append(config_public.copy())
     config_split_all[-1]['train_split'] = '../cancer/split/split_{}_train.txt'.format(i)
@@ -66,5 +67,35 @@ for i in range(5):
     config_split_all[-1]['workdir'] = '../cancer/workdir/{}_split_{}/'.format(config_name, i)
 ##################################################    split configs
 
+
+##################################################    split configs
+for i in range(5):
+    config_split_all.append(config_public.copy())
+    config_split_all[-1]['aux_weight'] = 0.1
+    config_split_all[-1]['train_split'] = '../cancer/split/split_{}_train.txt'.format(i)
+    config_split_all[-1]['val_split'] = '../cancer/split/split_{}_val.txt'.format(i)
+    config_split_all[-1]['test_split'] = '../cancer/split/split_{}_test.txt'.format(i)
+    config_split_all[-1]['workdir'] = '../cancer/workdir/{}_0.1_split_{}/'.format(config_name, i)
+##################################################    split configs
+
+##################################################    split configs
+for i in range(5):
+    config_split_all.append(config_public.copy())
+    config_split_all[-1]['aux_weight'] = 0.2
+    config_split_all[-1]['train_split'] = '../cancer/split/split_{}_train.txt'.format(i)
+    config_split_all[-1]['val_split'] = '../cancer/split/split_{}_val.txt'.format(i)
+    config_split_all[-1]['test_split'] = '../cancer/split/split_{}_test.txt'.format(i)
+    config_split_all[-1]['workdir'] = '../cancer/workdir/{}_0.2_split_{}/'.format(config_name, i)
+##################################################    split configs
+
+##################################################    split configs
+for i in range(5):
+    config_split_all.append(config_public.copy())
+    config_split_all[-1]['aux_weight'] = 0.4
+    config_split_all[-1]['train_split'] = '../cancer/split/split_{}_train.txt'.format(i)
+    config_split_all[-1]['val_split'] = '../cancer/split/split_{}_val.txt'.format(i)
+    config_split_all[-1]['test_split'] = '../cancer/split/split_{}_test.txt'.format(i)
+    config_split_all[-1]['workdir'] = '../cancer/workdir/{}_0.4_split_{}/'.format(config_name, i)
+##################################################    split configs
 all_configs = config_split_all
 # all_configs = []
