@@ -119,7 +119,7 @@ class BiULSTM_unet(nn.Module):
             _return[prefix + '_relu{}'.format(i)] = nn.ReLU(inplace=True)
         return _return
 
-#DKJSB
+
 
 
     def get_loss(self, logits, batch_y):
