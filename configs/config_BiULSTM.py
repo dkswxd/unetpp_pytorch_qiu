@@ -62,10 +62,10 @@ for i in range(5):
     config_split_all[-1]['test_split'] = '../cancer/split/split_{}_test.txt'.format(i)
     # config_split_all[-1]['workdir'] = '../cancer/workdir/{}_split_{}/'.format(config_name, i)
 
-    config_split_all[-1]['use_deform'] = ['down3_conv0', 'down2_conv0', 'up2_conv0']
-    config_split_all[-1]['workdir'] = '../cancer/workdir/{}_d3_split_{}/'.format(config_name, i)
-    # config_split_all[-1]['use_deform'] = ['down3_conv0']
-    # config_split_all[-1]['workdir'] = '../cancer/workdir/{}_d1_split_{}/'.format(config_name, i)
+    # config_split_all[-1]['use_deform'] = ['down3_conv0', 'down2_conv0', 'up2_conv0']
+    # config_split_all[-1]['workdir'] = '../cancer/workdir/{}_d3_split_{}/'.format(config_name, i)
+    config_split_all[-1]['use_deform'] = ['down3_conv0']
+    config_split_all[-1]['workdir'] = '../cancer/workdir/{}_d1_split_{}/'.format(config_name, i)
 
     # config_split_all[-1]['optimizer'] = 'SGD'
     # config_split_all[-1]['learning_rate'] = 0.2
