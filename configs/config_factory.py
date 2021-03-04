@@ -18,8 +18,8 @@ all_configs = []
 # all_configs += config_FCLSTM_unet.all_configs
 # all_configs += config_BiCLSTM_dunet.all_configs
 # all_configs += config_BiCLSTM_in_unet.all_configs
-# all_configs += config_BiULSTM.all_configs
-all_configs += config_FULSTM.all_configs
+all_configs += config_BiULSTM.all_configs
+# all_configs += config_FULSTM.all_configs
 # all_configs += config_BiULSTM_unet.all_configs
 # all_configs += config_unet_DS.all_configs
 # all_configs += config_unet_softpool.all_configs
@@ -30,6 +30,16 @@ all_configs += config_FULSTM.all_configs
 # all_configs += config_unet_deform.config_modulated_all
 # all_configs += config_unet.config_aug_all
 # all_configs += config_unet.config_mxt_all
+
+
+#################### convert to dataset2
+for config in all_configs:
+    config['train_split'] = config['train_split'].replace('/cancer2/split2','/cancer2/split2')
+    config['val_split'] = config['train_split'].replace('/cancer2/split2','/cancer2/split2')
+    config['test_split'] = config['train_split'].replace('/cancer2/split2','/cancer2/split2')
+    config['workdir'] = config['workdir'].replace('/cancer/workdir', '/cancer2/workdir2')
+    config['npy_dir'] = config['npy_dir'].replace('/cancer/npy', '/cancer2/npy2')
+    config['label_dir'] = config['label_dir'].replace('/cancer/label', '/cancer2/label2')
 
 
 # #################### apply weight decay
