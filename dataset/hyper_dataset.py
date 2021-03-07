@@ -105,7 +105,7 @@ class hyper_dataset(Dataset):
         #     data = data / self.std
         if self.norm_kwargs['type'] == 'data':
             data = data - np.min(data, axis=(1, 2)).reshape((_C, 1, 1))
-            data = data / (np.max(data, axis=(1, 2)) / 255).reshape((_C, 1, 1))
+            data = data / np.maximum(np.max(data, axis=(1, 2)) / 255, 1).reshape((_C, 1, 1))
         # if self.norm_kwargs['type'] == 'pixel':
         #     data = data - np.min(data, axis=(0))
         #     data = data / (np.max(data, axis=(0)) / 255)

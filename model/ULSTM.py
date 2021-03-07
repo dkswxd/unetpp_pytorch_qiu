@@ -123,6 +123,5 @@ class _UBlock(nn.Module):
                 _return[prefix+'_conv{}'.format(i)] = nn.Conv2d(in_feature, out_feature, kernel_size=3, stride=1, padding=1)
             in_feature = out_feature
             _return[prefix+'_norm{}'.format(i)] = nn.BatchNorm2d(out_feature, track_running_stats=False)
-            if prefix != 'up0':
-                _return[prefix + '_relu{}'.format(i)] = nn.ReLU(inplace=True)
+            _return[prefix + '_relu{}'.format(i)] = nn.ReLU(inplace=True)
         return _return
