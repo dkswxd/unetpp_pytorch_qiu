@@ -20,7 +20,7 @@ def show_metrics(metrics):
         con_mat += m['confusion_matrix']
         auc += m['auc']
     auc /= len(metrics)
-    result = {'confusion_matrix': con_mat,
+    result = {'confusion_matrix': con_mat.tolist(),
               'accuracy': accuracy(con_mat),
               'kappa': kappa(con_mat),
               'precision': precision(con_mat),
@@ -107,8 +107,10 @@ def save_predict(filename, data, gt, pred):
     data = np.transpose(data, (0, 2, 3, 1))[0,...]
     if data.shape[2] == 60:
         data = data[:, :, 10:40:10]
-    if data.shape[2] == 1:
+    elif data.shape[2] == 1:
         data = np.concatenate([data, data, data], -1)
+    elif data.shape[2] == 15:
+        data = data[:, :, 0:15:5]
     data -= np.min(data, axis=(0,1))
     data /= (np.max(data, axis=(0,1))/255)
     data = data.astype(np.uint8)

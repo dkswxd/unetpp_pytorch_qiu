@@ -55,7 +55,7 @@ while (key != ord('q')):
 
         prediction_file = all_prediction_file[i]
         predict = cv2.imread(os.path.join(prediction_file[0], prediction_file[1]))
-        raw = np.load(os.path.join(npy_dir, prediction_file[1].replace('_mask.png', '.npy')))
+        raw = np.load(os.path.join(npy_dir, prediction_file[1].replace('_mask.png', '0.npy')))
         h, w = raw.shape[1:]
         raw = raw.astype(np.float)
         raw = raw - np.min(raw, axis=(1, 2)).reshape((60, 1, 1))

@@ -4,11 +4,12 @@ from configs import config_factory
 from tool import metric
 
 import os
-os.environ['CUDA_VISIBLE_DEVICES'] = '0'
 import torch
 from torch.utils.data import DataLoader
 from tqdm import tqdm
-
+import json
+os.environ['CUDA_VISIBLE_DEVICES'] = '0'
+recording = {}
 with torch.no_grad():
     for config in config_factory.all_configs:
 
@@ -41,3 +42,7 @@ with torch.no_grad():
             metric.save_predict(filename, batch_x, batch_y, prediction)
             filename = os.path.join(os.path.join(config['workdir'], 'logits'), test_dataset.y[step].split('/')[-1])
             metric.save_logits(filename, model.get_predict(logits, thresh=False))
+            recording[test_dataset.y[step].split('/')[-1]] = metric.show_metrics([metric.get_metrics(prediction, logits, model.get_gt(batch_y))])
+
+with open('../recording.json', 'w') as f:
+    json.dump(recording, f)

@@ -40,6 +40,7 @@ for config in all_configs:
     config['workdir'] = config['workdir'].replace('/cancer/workdir', '/cancer2/workdir2')
     config['npy_dir'] = config['npy_dir'].replace('/cancer/npy', '/cancer2/npy2')
     config['label_dir'] = config['label_dir'].replace('/cancer/label', '/cancer2/label2')
+    config['workdir'] = config['workdir'].replace('_split_', '_split_half_')
 
 
 # #################### apply weight decay

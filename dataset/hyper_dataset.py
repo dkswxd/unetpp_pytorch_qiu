@@ -25,7 +25,7 @@ class hyper_dataset(Dataset):
         with open(split_file) as f:
             for line in f.readlines():
                 self.x.append(os.path.join(npy_dir, line.strip()))
-                self.y.append(os.path.join(label_dir, line.strip().replace('.npy', '_mask.png')))
+                self.y.append(os.path.join(label_dir, line.strip().replace('0.npy', '_mask.png')))
         self.len = len(self.x)
         # self.mean = [8895.56570294, 8736.16861954, 8792.2975563,  8842.36984379, 8858.12202044,
         #              8808.25820789, 8787.23233831, 8646.04916632, 8505.59169405, 8449.97676027,
