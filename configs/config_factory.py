@@ -33,15 +33,22 @@ all_configs += config_BiULSTM.all_configs
 
 
 #################### convert to dataset2
-for config in all_configs:
-    config['train_split'] = config['train_split'].replace('/cancer/split','/cancer2/split2')
-    config['val_split'] = config['val_split'].replace('/cancer/split','/cancer2/split2')
-    config['test_split'] = config['test_split'].replace('/cancer/split','/cancer2/split2')
-    config['workdir'] = config['workdir'].replace('/cancer/workdir', '/cancer2/workdir2')
-    config['npy_dir'] = config['npy_dir'].replace('/cancer/npy', '/cancer2/npy2')
-    config['label_dir'] = config['label_dir'].replace('/cancer/label', '/cancer2/label2')
-    config['workdir'] = config['workdir'].replace('_split_', '_split_half_')
+# for config in all_configs:
+#     config['train_split'] = config['train_split'].replace('/cancer/split','/cancer2/split2')
+#     config['val_split'] = config['val_split'].replace('/cancer/split','/cancer2/split2')
+#     config['test_split'] = config['test_split'].replace('/cancer/split','/cancer2/split2')
+#     config['workdir'] = config['workdir'].replace('/cancer/workdir', '/cancer2/workdir2')
+#     config['npy_dir'] = config['npy_dir'].replace('/cancer/npy', '/cancer2/npy2')
+#     config['label_dir'] = config['label_dir'].replace('/cancer/label', '/cancer2/label2')
+#     config['workdir'] = config['workdir'].replace('_split_', '_split_half_')
 
+
+#################### convert to pca
+for config in all_configs:
+    config['npy_dir'] = config['npy_dir'].replace('/cancer/npy', '/cancer/npy_pca')
+    config['workdir'] = config['workdir'].replace('_split_', '_split_pca_')
+    config['channel_transform'] = 'none'
+    config['feature_root'] = config['feature_root'] * 2
 
 # #################### apply weight decay
 # for config in all_configs:

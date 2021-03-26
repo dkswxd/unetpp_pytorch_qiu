@@ -25,7 +25,7 @@ class hyper_dataset(Dataset):
         with open(split_file) as f:
             for line in f.readlines():
                 self.x.append(os.path.join(npy_dir, line.strip()))
-                self.y.append(os.path.join(label_dir, line.strip().replace('0.npy', '_mask.png')))
+                self.y.append(os.path.join(label_dir, line.strip().replace('.npy', '_mask.png')))
         self.len = len(self.x)
         # self.mean = [8895.56570294, 8736.16861954, 8792.2975563,  8842.36984379, 8858.12202044,
         #              8808.25820789, 8787.23233831, 8646.04916632, 8505.59169405, 8449.97676027,
@@ -104,14 +104,14 @@ class hyper_dataset(Dataset):
         #     data = data - self.mean
         #     data = data / self.std
         if self.norm_kwargs['type'] == 'data':
-            data = data - np.min(data, axis=(1, 2)).reshape((_C, 1, 1))
-            data = data / np.maximum(np.max(data, axis=(1, 2)) / 255, 1).reshape((_C, 1, 1))
+            data = data - np.mean(data, axis=(1, 2)).reshape((_C, 1, 1))
+            data = data / np.maximum(np.std(data, axis=(1, 2)) / 255, 0.0001).reshape((_C, 1, 1))
         # if self.norm_kwargs['type'] == 'pixel':
         #     data = data - np.min(data, axis=(0))
         #     data = data / (np.max(data, axis=(0)) / 255)
-        if self.norm_kwargs['type'] == 'mxt':
-            blank = np.load(self.x[index].split('roi')[0]+'blank0.npy')
-            data = data / blank
+        # if self.norm_kwargs['type'] == 'mxt':
+        #     blank = np.load(self.x[index].split('roi')[0]+'blank0.npy')
+        #     data = data / blank
 
         if self.channel_transform == 'fft':
             data = dct(data)
