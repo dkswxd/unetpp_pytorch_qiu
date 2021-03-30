@@ -50,6 +50,8 @@ class unet_3d(nn.Module):
                 ('predict_smax', nn.Softmax2d()),
                 ]))
 
+        self.preprocessBN = nn.BatchNorm2d(self.channels, track_running_stats=False)
+
         for m in self.modules():
             if isinstance(m, nn.Conv2d):
                 nn.init.kaiming_normal_(m.weight)
@@ -60,6 +62,7 @@ class unet_3d(nn.Module):
                 nn.init.constant_(m.bias, 0)
 
     def forward(self, x):
+        x = self.preprocessBN(x)
         x = x.unsqueeze(1)
         x = F.max_pool3d(x,kernel_size=2)
         # # convert x from 1x32x1024x1280 to 1x1x32x1024x1280

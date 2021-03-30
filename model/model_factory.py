@@ -11,6 +11,7 @@ from .FCLSTM_unet import FCLSTM_unet
 from .BiCLSTM_dunet import BiCLSTM_dunet
 from .BiCLSTM_in_unet import BiCLSTM_in_unet
 from .BiULSTM import BiULSTM
+from .BiULSTM_seperate import BiULSTM_seperate
 from .FULSTM import FULSTM
 from .BiULSTM_unet import BiULSTM_unet
 from .unet_DS import unet_DS
@@ -29,6 +30,7 @@ model_dict = {'unet': unet,
               'BiCLSTM_dunet': BiCLSTM_dunet,
               'BiCLSTM_in_unet':BiCLSTM_in_unet,
               'BiULSTM': BiULSTM,
+              'BiULSTM_seperate': BiULSTM_seperate,
               'FULSTM': FULSTM,
               'BiULSTM_unet': BiULSTM_unet,
               'unet_DS':unet_DS,

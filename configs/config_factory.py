@@ -2,7 +2,7 @@
 from . import config_unet, config_unetpp, config_u2net, config_unet_deform, config_pspnet, config_unet_poi, \
     config_BiCLSTM, config_BiCLSTM_unet, config_BiCLSTM_in_unet, config_unet_3d, config_BiCLSTM_dunet, \
     config_unet_DS, config_FCLSTM_unet, config_unet_softpool, config_BiULSTM, config_BiULSTM_unet, \
-    config_FULSTM
+    config_FULSTM, config_BiULSTM_seperate
 
 all_configs = []
 #
@@ -10,7 +10,7 @@ all_configs = []
 # all_configs += config_unetpp.all_configs
 # all_configs += config_unet_deform.all_configs
 # all_configs += config_unet_poi.all_configs
-# all_configs += config_unet_3d.all_configs[2:]
+# all_configs += config_unet_3d.all_configs
 # all_configs += config_pspnet.all_configs
 # all_configs += config_u2net.all_configs
 # all_configs += config_BiCLSTM.all_configs
@@ -19,6 +19,7 @@ all_configs = []
 # all_configs += config_BiCLSTM_dunet.all_configs
 # all_configs += config_BiCLSTM_in_unet.all_configs
 all_configs += config_BiULSTM.all_configs
+# all_configs += config_BiULSTM_seperate.all_configs
 # all_configs += config_FULSTM.all_configs
 # all_configs += config_BiULSTM_unet.all_configs
 # all_configs += config_unet_DS.all_configs
@@ -44,11 +45,11 @@ all_configs += config_BiULSTM.all_configs
 
 
 #################### convert to pca
-for config in all_configs:
-    config['npy_dir'] = config['npy_dir'].replace('/cancer/npy', '/cancer/npy_pca')
-    config['workdir'] = config['workdir'].replace('_split_', '_split_pca_')
-    config['channel_transform'] = 'none'
-    config['feature_root'] = config['feature_root'] * 2
+# for config in all_configs:
+#     config['npy_dir'] = config['npy_dir'].replace('/cancer/npy', '/cancer/npy_pca')
+#     config['workdir'] = config['workdir'].replace('_split_', '_split_pca_')
+#     config['channel_transform'] = 'none'
+#     config['feature_root'] = config['feature_root'] * 2
 
 # #################### apply weight decay
 # for config in all_configs:

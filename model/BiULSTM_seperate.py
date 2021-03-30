@@ -1,4 +1,4 @@
-from .ULSTM import ULSTM
+from .ULSTM_seperate import ULSTM_seperate
 
 import torch
 import torch.nn as nn
@@ -9,9 +9,9 @@ from torch import Tensor
 from torch.jit.annotations import List
 import numpy as np
 
-class BiULSTM(nn.Module):
+class BiULSTM_seperate(nn.Module):
     def __init__(self, config):
-        super(BiULSTM, self).__init__()
+        super(BiULSTM_seperate, self).__init__()
 
         self.layers = config['layers']
         self.feature_root = config['feature_root']
@@ -25,19 +25,10 @@ class BiULSTM(nn.Module):
         else:
             pass
 
-        self.forwardLSTM = ULSTM(self.layers, self.channels, self.feature_root, self.conv_repeat, self.use_deform)
-        self.backwardLSTM = ULSTM(self.layers, self.channels, self.feature_root, self.conv_repeat, self.use_deform)
+        self.forwardLSTM = ULSTM_seperate(self.layers, self.channels, self.feature_root, self.conv_repeat, self.use_deform)
+        self.backwardLSTM = ULSTM_seperate(self.layers, self.channels, self.feature_root, self.conv_repeat, self.use_deform)
 
         self.predict_layer = nn.Sequential(OrderedDict([
-                # ('predict_conv', nn.Conv2d(self.feature_root * 2, self.feature_root * 2, kernel_size=3, stride=1, padding=1)),
-                # ('predict_bn', nn.BatchNorm2d(self.feature_root * 2, track_running_stats=False)),
-                # ('predict_relu', nn.ReLU(inplace=True)),
-                ('predict_conv2', nn.Conv2d(self.feature_root * 2, self.n_class, kernel_size=3, stride=1, padding=1)),
-                # ('predict_smax', nn.Sigmoid()),
-                ('predict_smax', nn.Softmax2d()),
-                ]))
-
-        self.predict_layer_opt = nn.Sequential(OrderedDict([
                 # ('predict_conv', nn.Conv2d(self.feature_root * 2, self.feature_root * 2, kernel_size=3, stride=1, padding=1)),
                 # ('predict_bn', nn.BatchNorm2d(self.feature_root * 2, track_running_stats=False)),
                 # ('predict_relu', nn.ReLU(inplace=True)),
@@ -55,7 +46,7 @@ class BiULSTM(nn.Module):
             elif isinstance(m, nn.Linear):
                 nn.init.constant_(m.bias, 0)
 
-    def forward(self, x, is_opt=False):
+    def forward(self, x):
         x = F.max_pool2d(x, 2, 2)
         B, C, H, W = x.shape
         # x (B, C, H, W)
@@ -68,10 +59,7 @@ class BiULSTM(nn.Module):
         _, backward_h, _ = self.backwardLSTM(x.flip((0)), None, C)
         # backward_h (B, feature_root, H, W)
         _cat = torch.cat([forward_h, backward_h], 1)
-        if is_opt:
-            logits = self.predict_layer_opt(_cat)
-        else:
-            logits = self.predict_layer(_cat)
+        logits = self.predict_layer(_cat)
         logits = F.interpolate(logits,scale_factor=2,mode='nearest')
         return logits
 
