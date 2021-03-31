@@ -7,7 +7,6 @@ from collections import OrderedDict
 from torch import Tensor
 from torch.jit.annotations import List
 import numpy as np
-from pytorch_loss import FocalLossV1, FocalLossV2, FocalLossV3
 
 class unet(nn.Module):
     def __init__(self, config):
@@ -25,8 +24,6 @@ class unet(nn.Module):
 
         if config['loss'] == 'BCE':
             self.loss_func = torch.nn.BCELoss()
-        elif config['loss'] == 'focal':
-            self.loss_func = FocalLossV2(alpha=0.5)
         else:
             pass
 
