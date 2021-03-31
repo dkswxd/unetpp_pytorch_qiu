@@ -15,7 +15,7 @@ from tqdm import tqdm
 import datetime
 
 for config in config_factory.all_configs:
-    config['workdir'] = config['workdir'].replace('_split_', '_opt_split_')
+    config['workdir'] = config['workdir'].replace('_split_', '_opt_2_split_')
     config_str = '\n***config***\n'
     for k,v in config.items():
         config_str += '{}: {}\n'.format(k, v)
@@ -68,6 +68,18 @@ for config in config_factory.all_configs:
         if 'train' in config['work_phase']:
             model.train()
             for step, (batch_x, batch_y, batch_x_opt, batch_y_opt) in enumerate(tqdm(train_loader)):
+                batch_x_opt = batch_x_opt.cuda()
+                batch_y_opt = batch_y_opt.cuda()
+                logits = model(batch_x_opt,is_opt=True)
+                loss = model.get_loss(logits, batch_y_opt)
+                with torch.no_grad():
+                    # print('epoch:{}, step:{}, train loss:{}'.format(epoch, step, loss))
+                    # log.write('+++time:{}, epoch:{}, step:{}, train loss:{}\n'.format(datetime.datetime.now(), epoch, step, loss))
+                    writer.add_scalar('trainloss', loss.item(), global_step=step + epoch * train_dataset.len)
+                    optimizer.zero_grad()
+                    loss.backward()
+                    optimizer.step()
+
                 batch_x = batch_x.cuda()
                 batch_y = batch_y.cuda()
                 logits = model(batch_x)
@@ -75,18 +87,6 @@ for config in config_factory.all_configs:
                 with torch.no_grad():
                     # print('epoch:{}, step:{}, train loss:{}'.format(epoch, step, loss))
                     log.write('+++time:{}, epoch:{}, step:{}, train loss:{}\n'.format(datetime.datetime.now(), epoch, step, loss))
-                    writer.add_scalar('trainloss', loss.item(), global_step=step + epoch * train_dataset.len)
-                    optimizer.zero_grad()
-                    loss.backward()
-                    optimizer.step()
-
-                batch_x = batch_x_opt.cuda()
-                batch_y = batch_y_opt.cuda()
-                logits = model(batch_x,is_opt=True)
-                loss = model.get_loss(logits, batch_y)
-                with torch.no_grad():
-                    # print('epoch:{}, step:{}, train loss:{}'.format(epoch, step, loss))
-                    # log.write('+++time:{}, epoch:{}, step:{}, train loss:{}\n'.format(datetime.datetime.now(), epoch, step, loss))
                     writer.add_scalar('trainloss', loss.item(), global_step=step + epoch * train_dataset.len)
                     optimizer.zero_grad()
                     loss.backward()

@@ -95,7 +95,7 @@ class hyper_dataset(Dataset):
 
     def preprocess(self, data, index):
         data = data.astype(np.float32)
-        _C , _H, _W = data.shape
+        _C, _H, _W = data.shape
         # if self.norm_kwargs['type'] == 'raw':
         #     data -= np.amin(data)
         #     if np.amax(data) != 0:
@@ -129,6 +129,9 @@ class hyper_dataset(Dataset):
             data = data[5:35:2]
         elif self.channel_transform == '2:34':
             data = data[2:34]
+        elif self.channel_transform == '0:2':
+            data = data[0]
+            data = data.reshape(1, _H, _W)
 
         return data
 
