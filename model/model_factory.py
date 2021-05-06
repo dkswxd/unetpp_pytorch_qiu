@@ -16,6 +16,7 @@ from .FULSTM import FULSTM
 from .BiULSTM_unet import BiULSTM_unet
 from .unet_DS import unet_DS
 from .unet_softpool import unet_softpool
+from .HSI_Tr import HSI_Tr
 
 model_dict = {'unet': unet,
               'unetpp': unetpp,
@@ -34,7 +35,8 @@ model_dict = {'unet': unet,
               'FULSTM': FULSTM,
               'BiULSTM_unet': BiULSTM_unet,
               'unet_DS':unet_DS,
-              'unet_softpool':unet_softpool,}
+              'unet_softpool':unet_softpool,
+              'HSI_Tr':HSI_Tr,}
 
 def get_model(config):
     assert config['model'] in model_dict.keys()

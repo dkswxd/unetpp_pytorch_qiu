@@ -1,6 +1,6 @@
 from model.model_factory import get_model
 from dataset.hyper_dataset import hyper_dataset
-from dataset.hyper_dataset_opt import hyper_dataset_opt
+from dataset.hyper_dataset_color import hyper_dataset_color
 from configs import config_factory
 from tool import send_email
 from tool import metric
@@ -15,7 +15,7 @@ from tqdm import tqdm
 import datetime
 
 for config in config_factory.all_configs:
-    config['workdir'] = config['workdir'].replace('_split_', '_opt_2_split_')
+    config['workdir'] = config['workdir'].replace('_split_', '_color_2_split_')
     config_str = '\n***config***\n'
     for k,v in config.items():
         config_str += '{}: {}\n'.format(k, v)
@@ -48,7 +48,7 @@ for config in config_factory.all_configs:
 
     ## build dataset
     if config['dataset'] == 'hyper':
-        train_dataset = hyper_dataset_opt(config['npy_dir'], config['label_dir'], config['train_split'], config['norm_kwargs'], config['channel_transform'], config['aug_config'])
+        train_dataset = hyper_dataset_color(config['npy_dir'], config['label_dir'], config['train_split'], config['norm_kwargs'], config['channel_transform'], config['aug_config'])
         train_loader = DataLoader(train_dataset, batch_size=config['batch_size'], shuffle=True)
         val_dataset = hyper_dataset(config['npy_dir'], config['label_dir'], config['val_split'], config['norm_kwargs'], config['channel_transform'], config['aug_config'])
         val_loader = DataLoader(val_dataset, batch_size=1, shuffle=True)
@@ -73,7 +73,7 @@ for config in config_factory.all_configs:
                 #TODO: preprocess
                 batch_x_opt = batch_x_opt.cuda()
                 batch_y_opt = batch_y_opt.cuda()
-                logits = model(batch_x_opt)
+                logits = model(batch_x_opt,is_opt=True)
                 loss = model.get_loss(logits, batch_y_opt)
                 with torch.no_grad():
                     # print('epoch:{}, step:{}, train loss:{}'.format(epoch, step, loss))

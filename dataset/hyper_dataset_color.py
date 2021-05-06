@@ -11,28 +11,26 @@ import random
 from skimage.transform import rescale
 import torch.nn.functional as F
 
-class hyper_dataset_opt(Dataset):
+class hyper_dataset_color(Dataset):
     """
         下载数据、初始化数据，都可以在这里完成
     """
 
-    def __init__(self, npy_dir, label_dir, split_file, norm_kwargs, channel_transform, aug_config, opt_png_dir='../opt/images/', opt_mask_dir='../opt/masks/'):
+    def __init__(self, npy_dir, label_dir, split_file, norm_kwargs, channel_transform, aug_config, opt_png_dir='../cancer_color/png/', opt_mask_dir='../cancer_color/label/'):
 
         self.norm_kwargs = norm_kwargs
         self.channel_transform = channel_transform
         self.x = []
         self.y = []
+        self.x_opt = []
+        self.y_opt = []
         with open(split_file) as f:
             for line in f.readlines():
                 self.x.append(os.path.join(npy_dir, line.strip()))
                 self.y.append(os.path.join(label_dir, line.strip().replace('.npy', '_mask.png')))
+                self.x_opt.append(os.path.join(opt_png_dir, line.strip().replace('.npy', '.jpg')))
+                self.y_opt.append(os.path.join(opt_mask_dir, line.strip().replace('.npy', '_mask.png')))
         self.len = len(self.x)
-        self.x_opt = []
-        self.y_opt = []
-        for filename in os.listdir(opt_png_dir):
-            self.x_opt.append(os.path.join(opt_png_dir, filename))
-            self.y_opt.append(os.path.join(opt_mask_dir, filename))
-        self.opt_list = []
         self.aug_config = aug_config if 'train' in split_file else '10086'
 
 
@@ -44,11 +42,9 @@ class hyper_dataset_opt(Dataset):
         label = np.stack([~label, label], 0).astype(np.float32)
         data, label = self.aug(data, label)
         ########################
-        if len(self.opt_list) == 0:
-            self.opt_list = list(range(len(self.x_opt)))
-            random.shuffle(self.opt_list)
-        opt_index = self.opt_list.pop()
+        opt_index = index
         opt_data = np.array(Image.open(self.x_opt[opt_index]))
+        opt_data = np.transpose(opt_data, (2,0,1))
         opt_data = self.preprocess_for_opt(opt_data)
         opt_label = np.array(Image.open(self.y_opt[opt_index]))
         opt_label = np.where(opt_label > 127, True, False)

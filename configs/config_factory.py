@@ -2,7 +2,7 @@
 from . import config_unet, config_unetpp, config_u2net, config_unet_deform, config_pspnet, config_unet_poi, \
     config_BiCLSTM, config_BiCLSTM_unet, config_BiCLSTM_in_unet, config_unet_3d, config_BiCLSTM_dunet, \
     config_unet_DS, config_FCLSTM_unet, config_unet_softpool, config_BiULSTM, config_BiULSTM_unet, \
-    config_FULSTM, config_BiULSTM_seperate
+    config_FULSTM, config_BiULSTM_seperate, config_HSI_Tr
 
 all_configs = []
 #
@@ -18,19 +18,21 @@ all_configs = []
 # all_configs += config_FCLSTM_unet.all_configs
 # all_configs += config_BiCLSTM_dunet.all_configs
 # all_configs += config_BiCLSTM_in_unet.all_configs
-all_configs += config_BiULSTM.all_configs
+# all_configs += config_BiULSTM.all_configs
 # all_configs += config_BiULSTM_seperate.all_configs
 # all_configs += config_FULSTM.all_configs
 # all_configs += config_BiULSTM_unet.all_configs
 # all_configs += config_unet_DS.all_configs
 # all_configs += config_unet_softpool.all_configs
+# all_configs += config_HSI_Tr.all_configs
 
 
 # all_configs += config_unet.config_norm_all
 # all_configs += config_unet.config_focal_loss_all
 # all_configs += config_unet_deform.config_modulated_all
-# all_configs += config_unet.config_aug_all
+all_configs += config_unet.config_aug_all
 # all_configs += config_unet.config_mxt_all
+# all_configs += config_unet.config_bn_all
 
 
 #################### convert to dataset2

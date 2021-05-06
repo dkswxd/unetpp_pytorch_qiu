@@ -37,14 +37,14 @@ class BiULSTM(nn.Module):
                 ('predict_smax', nn.Softmax2d()),
                 ]))
 
-        self.predict_layer_opt = nn.Sequential(OrderedDict([
-                # ('predict_conv', nn.Conv2d(self.feature_root * 2, self.feature_root * 2, kernel_size=3, stride=1, padding=1)),
-                # ('predict_bn', nn.BatchNorm2d(self.feature_root * 2, track_running_stats=False)),
-                # ('predict_relu', nn.ReLU(inplace=True)),
-                ('predict_conv2', nn.Conv2d(self.feature_root * 2, self.n_class, kernel_size=3, stride=1, padding=1)),
-                # ('predict_smax', nn.Sigmoid()),
-                ('predict_smax', nn.Softmax2d()),
-                ]))
+        # self.predict_layer_opt = nn.Sequential(OrderedDict([
+        #         # ('predict_conv', nn.Conv2d(self.feature_root * 2, self.feature_root * 2, kernel_size=3, stride=1, padding=1)),
+        #         # ('predict_bn', nn.BatchNorm2d(self.feature_root * 2, track_running_stats=False)),
+        #         # ('predict_relu', nn.ReLU(inplace=True)),
+        #         ('predict_conv2', nn.Conv2d(self.feature_root * 2, self.n_class, kernel_size=3, stride=1, padding=1)),
+        #         # ('predict_smax', nn.Sigmoid()),
+        #         ('predict_smax', nn.Softmax2d()),
+        #         ]))
 
         for m in self.modules():
             if isinstance(m, nn.Conv2d):

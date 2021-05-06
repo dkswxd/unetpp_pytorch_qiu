@@ -246,5 +246,18 @@ for i in range(5):
     config_mxt_all[-1]['test_split'] = '../cancer/split/split_{}_test.txt'.format(i)
     config_mxt_all[-1]['workdir'] = '../cancer/workdir/{}_aug2_{}/'.format(config_name, i)
 ##################################################    split configs
+
+
+
+##################################################    split configs
+config_bn_all = []
+for i in range(5):
+    config_bn_all.append(config_public.copy())
+    config_bn_all[-1]['track_running_stats'] = True
+    config_bn_all[-1]['train_split'] = '../cancer/split/split_{}_train.txt'.format(i)
+    config_bn_all[-1]['val_split'] = '../cancer/split/split_{}_val.txt'.format(i)
+    config_bn_all[-1]['test_split'] = '../cancer/split/split_{}_test.txt'.format(i)
+    config_bn_all[-1]['workdir'] = '../cancer/workdir/{}_bn_{}/'.format(config_name, i)
+##################################################    split configs
 all_configs = config_split_all
 # all_configs = []
